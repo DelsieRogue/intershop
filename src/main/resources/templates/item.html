@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Витрина товаров</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+
+<body>
+    <!-- В href ссылка на страницу заказов -->
+    <a th:href="@{/order}" style="float:right;">
+        <b>ЗАКАЗЫ &cudarrr;</b>
+    </a>
+    <!-- В href ссылка на корзину -->
+    <a  th:href="@{/cart}" style="float:right;">
+        <b>КОРЗИНА &cudarrr;</b>
+    </a>
+    <!-- В href ссылка на главную страницу -->
+    <a th:href="@{/product}" style="float:right;">
+        <b>ГЛАВНАЯ &cudarrr;</b>
+    </a>
+    <div style="width:70%;margin-left:auto;margin-right:auto;">
+        <p>
+            <!-- В src ссылка изображение товара -->
+            <img width="300" height="300" th:src="@{/image/{name}(name=${product.imageName})}">
+        </p>
+        <p>
+            <!-- В text название товара -->
+            <b th:text="${product.title}"></b>
+            <!-- В text цена товара -->
+            <b th:text="${product.price}" style="text-align:right;"></b>
+        </p>
+        <p>
+            <!-- В text описание товара -->
+            <span th:text="${product.description}"></span>
+        </p>
+        <!-- 
+		В action ссылка на изменение количества товара в корзине.
+		Передается параметр запроса action=[minus|plus]
+	-->
+        <form th:action="@{/product/{productId}/updateInCart(productId=${product.id})}" method="post">
+            <input type="hidden" name="_method" value="PUT" />
+            <span th:if="${product.quantity} != null">
+                <button name="action" value="MINUS">-</button>
+                <!-- В text количество товара в корзине -->
+                <span th:text="${product.quantity}"></span>
+                <button name="action" value="PLUS">+</button>
+            </span>
+            <!-- В if true, если товар еще не был добавлен в корзину, false, если уже был -->
+            <button name="action" value="PLUS" th:if="${product.quantity} == null" >В корзину</button>
+        </form>
+    </div>
+</body>
+
+</html>

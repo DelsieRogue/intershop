@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: intershop
+  liquibase:
+    change-log: classpath:/db/changelog/db.changelog-master.xml
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=intershop
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+server:
+  servlet:
+    context-path: /intershop
+
+image:
+  folder:
+    server:
+      path: ${IMAGES_DIR:${user.dir}/uploaded-image}
+    client:
+      path: /image/
+
+logging:
+  level:
+    org:
+      springframework:
+        boot:
+          autoconfigure:
+            logging: INFO

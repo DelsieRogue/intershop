@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="1" author="mustafin_ir">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="products"/>
+            </not>
+        </preConditions>
+        <createTable tableName="products">
+            <column name="id" type="bigserial">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="title" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="image_name" type="varchar(255)"/>
+            <column name="price" type="DECIMAL(10, 2)">
+                <constraints nullable="false" checkConstraint="price>=0" />
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+        <rollback>
+            <dropTable tableName="products"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="2" author="mustafin_ir">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="orders"/>
+            </not>
+        </preConditions>
+        <createTable tableName="orders">
+            <column name="id" type="bigserial">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="number" type="varchar(10)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="total_price" type="DECIMAL(10,2)">
+                <constraints nullable="false" checkConstraint="total_price>=0"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+        <rollback>
+            <dropTable tableName="orders"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="3" author="mustafin_ir">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="order_items"/>
+            </not>
+        </preConditions>
+        <createTable tableName="order_items">
+            <column name="id" type="bigserial">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="order_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_order_item_order" references="orders(id)" deleteCascade="true"/>
+            </column>
+            <column name="product_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_order_item_product" references="products(id)" deleteCascade="false"/>
+            </column>
+            <column name="quantity" type="int">
+                <constraints nullable="false" checkConstraint="quantity>0"/>
+            </column>
+            <column name="price" type="DECIMAL(10,2)">
+                <constraints nullable="false" checkConstraint="price>=0"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint tableName="order_items"
+                             columnNames="order_id, product_id"
+                             constraintName="uq_order_items_order_product"/>
+        <rollback>
+            <dropTable tableName="order_items"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

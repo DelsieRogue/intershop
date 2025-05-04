@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Заказ</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+
+<body>
+<!-- В href ссылка на страницу заказов -->
+<a th:href="@{/order}" style="float:right;">
+    <b>ЗАКАЗЫ &cudarrr;</b>
+</a>
+<!-- В href ссылка на корзину -->
+<a th:href="@{/cart}" style="float:right;">
+    <b>КОРЗИНА &cudarrr;</b>
+</a>
+<!-- В href ссылка на главную страницу -->
+<a th:href="@{/product}" style="float:right;">
+    <b>ГЛАВНАЯ &cudarrr;</b>
+</a>
+<!-- В if true, если перешли со страницы оформления заказа, false в остальных случаях -->
+<h1 style="text-align:center" th:if="${isNewOrder}">Поздравляем! Успешная покупка! &#128578;</h1>
+<table style="width:70%;margin-left:auto;margin-right:auto;">
+    <tr>
+        <td>
+            <!-- В text номер заказа -->
+            <h2 th:text="${order.number}"></h2>
+        </td>
+    </tr>
+    <!-- Итерируемся по товарам из заказа -->
+    <tr th:each="item : ${order.items}">
+        <td>
+            <table>
+                <tr>
+                    <td>
+                        <!-- В href ссылка на страницу с карточкой товара -->
+                        <a th:href="@{/product/{id}(id=${item.id})}">
+                            <!-- В src ссылка изображение товара -->
+                            <img width="300" height="300" th:src="@{/image/{name}(name=${item.imageName})}">
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <!-- В text название товара -->
+                        <b th:text="${item.title}"></b>
+                    </td>
+                    <td>
+                        <!-- В text описание товара -->
+                        <b th:text="${item.description}"></b>
+                    </td>
+                    <td>
+                        <!-- В text цена товара -->
+                        <b th:text="${item.price}"></b>
+                    </td>
+                    <td>
+                        <b th:text="${item.quantity}"></b>
+                    </td>
+                    <td>
+                        <!-- В text цена товара -->
+                        <b th:text="${item.totalPrice}"></b>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <!-- В text общая сумма заказа -->
+            <h3 th:text="${order.totalPrice}"></h3>
+        </td>
+    </tr>
+</table>
+</body>
+
+</html>

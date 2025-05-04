@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Витрина товаров</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <script th:src="@{/scripts/script.js}" defer></script>
+</head>
+
+<body>
+    <!-- В href ссылка на страницу заказов -->
+    <a th:href="@{/order}" style="float:right;">
+        <b>ЗАКАЗЫ &cudarrr;</b>
+    </a>
+    <!-- В href ссылка на корзину -->
+    <a th:href="@{/cart}" style="float:right;">
+        <b>КОРЗИНА &cudarrr;</b>
+    </a>
+    <button id="addProduct" onclick="togglePostForm()">Добавить продукт</button>
+    <table style="width:70%;margin-left:auto;margin-right:auto;">
+        <tr>
+            <td>
+                <form>
+                    <p>
+                        <label for="search">Найти: </label>
+                        <!-- В value значение со строкой поиска товара, если ничего не ищем, то пустая строка -->
+                        <input id="search" style="width:300px;" name="search" th:value="${search}">
+                        <button name="action">&#128269;</button>
+                    </p>
+                    <p>
+                        <label for="sort">Сортировка: </label>
+                        <!-- В selected true, если выбран соответствующий пункт -->
+                        <select id="sort" name="sort" onchange="this.form.submit()">
+                            <option value="NO" th:selected="${sort == null}">нет</option>
+                            <option value="ALPHA" th:selected="${sort == 'ALPHA'}">по алфавиту</option>
+                            <option value="PRICE" th:selected="${sort == 'PRICE'}">по цене</option>
+                        </select>
+                    </p>
+                    <p>
+                        <label for="pageSize">Число товаров: </label>
+                        <!-- В selected true, если выбран соответствующий пункт -->
+                        <select id="pageSize" name="pageSize" onchange="this.form.submit()">
+                            <option value="5" th:selected="${pageSize == 5}">5</option>
+                            <option value="10" th:selected="${pageSize == 10}">10</option>
+                            <option value="20" th:selected="${pageSize == 20}">20</option>
+                            <option value="50" th:selected="${pageSize == 50}">50</option>
+                            <option value="100" th:selected="${pageSize == 100}">100</option>
+                        </select>
+                    </p>
+                    <p>
+                    	<!-- 
+                    		В if true, если выбрана не первая страница.
+                    		В value номер предыдущей страницы.
+                    	-->
+                        <button th:if="${page.hasPrevious()}" name="page" th:value="${page.getNumber() - 1}">&lt;</button>
+                        <!-- В text номер текущей страницы -->
+                        <span th:text="${'Страница: '+ (page.getNumber() + 1)}"></span>
+                        <!-- 
+                    		В if true, если выбрана не последняя страница.
+                    		В value номер следующей страницы.
+                    	-->
+                        <button th:if="${page.hasNext()}" name="page" th:value="${page.getNumber() + 1}">&gt;</button>
+                    </p>
+                </form>
+            </td>
+        </tr>
+        <!-- В each итерируемся по строке/списку со списками из N (например, трех) товаров -->
+        <tr th:each="product : ${page.content}">
+            <!-- В each итерируемся товарам в строке/списке из N (например, трех) товаров -->
+            <td>
+                <table>
+                    <tr>
+                        <td>
+                            <!-- В href ссылка на страницу с карточкой товара -->
+                            <a th:href="@{/product/{id}(id=${product.id})}">
+                                <!-- В src ссылка изображение товара -->
+                                <img width="300" height="300" th:src="@{/image/{name}(name=${product.imageName})}">
+                            </a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <!-- В text название товара -->
+                            <b th:text="${product.title}"></b>
+                        </td>
+                        <td>
+                       	    <!-- В text цена товара -->
+                            <b th:text="${product.price}"></b>
+                        </td>
+                    </tr>
+                    <tr>
+                        <!-- В text описание товара -->
+                        <td th:text="${product.description}"></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <!-- 
+                    		В action ссылка на изменение количества товара в корзине.
+                    		Передается параметр запроса action=[minus|plus]
+                    	    -->
+                            <form th:action="@{/product/{productId}/updateInCart(productId=${product.id})}" method="post">
+                                <input type="hidden" name="_method" value="PUT" />
+                                <span th:if="${product.quantity != null}">
+                                    <button name="action" value="MINUS">-</button>
+                                <!-- В text количество товара в корзине -->
+                                    <span th:text="${product.quantity}"></span>
+                                    <button name="action" value="PLUS">+</button>
+                                </span>
+                                <!-- В if true, если товар еще не был добавлен в корзину, false, если уже был -->
+                                <button name="action" value="PLUS" th:if="${product.quantity == null}" style="float:right;">В корзину</button>
+                            </form>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+    <div id="productForm" class="product-form" style="display: none;">
+        <h2>Добавить новый продукт</h2>
+        <form th:action="@{/product}" method="post" th:object="${newProduct}" enctype="multipart/form-data">
+            <input type="text" name="title" th:field="*{title}" placeholder="Название товара" required>
+            <textarea name="content" th:field="*{description}" placeholder="Текст описания" required></textarea>
+            <input type="number" th:field="*{price}" placeholder="Стоимость" required>
+            <input type="file" name="image" accept="image/*">
+            <button type="submit">Добавить</button>
+            <button type="button" onclick="togglePostForm()">Закрыть</button>
+        </form>
+    </div>
+</body>
+
+</html>
