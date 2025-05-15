@@ -1,6 +1,6 @@
-# Веб-Блог
+# Онлайн магазин
 
-Это веб-приложение онлайн магазина.
+Это веб-приложение онлайн магазина. На реактивном стеке.
 
 ## Запуск тестов
 
@@ -24,8 +24,7 @@ chmod 777 ./target/intershop-DEV-SNAPSHOT.jar
 
 Для запуска приложения в контейнере:
 ```bash
-mvn clean install
-chmod 777 ./target/intershop-DEV-SNAPSHOT.jar
+mkdir "postgres-data"
 docker-compose up --build
 ```
 

@@ -2,122 +2,97 @@ package ru.yandex.practicum.intershop.service;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Sort;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.web.server.WebSession;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
+import ru.yandex.practicum.intershop.db.dao.OrderDao;
+import ru.yandex.practicum.intershop.db.repository.OrderItemRepository;
+import ru.yandex.practicum.intershop.db.repository.OrderRepository;
+import ru.yandex.practicum.intershop.db.repository.ProductRepository;
 import ru.yandex.practicum.intershop.dto.OrderDto;
 import ru.yandex.practicum.intershop.dto.OrderItemDto;
 import ru.yandex.practicum.intershop.entity.Order;
-import ru.yandex.practicum.intershop.entity.OrderItem;
 import ru.yandex.practicum.intershop.entity.Product;
-import ru.yandex.practicum.intershop.mapper.OrderItemMapper;
-import ru.yandex.practicum.intershop.mapper.OrderItemMapperImpl;
-import ru.yandex.practicum.intershop.mapper.OrderMapper;
-import ru.yandex.practicum.intershop.mapper.OrderMapperImpl;
-import ru.yandex.practicum.intershop.repository.OrderRepository;
-import ru.yandex.practicum.intershop.repository.ProductRepository;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-@SpringBootTest(classes = {OrderService.class, OrderMapperImpl.class, OrderItemMapperImpl.class})
+@SpringBootTest(classes = {OrderService.class})
 class OrderServiceTest {
     @Autowired
     OrderService orderService;
     @MockitoBean
     OrderRepository orderRepository;
     @MockitoBean
+    OrderItemRepository orderItemRepository;
+    @MockitoBean
     ProductRepository productRepository;
     @MockitoBean
     CartService cartService;
+    @MockitoBean
+    OrderDao orderDao;
+    @MockitoBean
+    WebSession session;
 
-    private final Order testOrder = new Order().setId(3L)
-            .setTotalPrice(BigDecimal.TEN)
-            .setNumber("N1234")
-            .setCreatedAt(LocalDateTime.now())
-            .setOrderItems(List.of(new OrderItem()
-                    .setId(2L)
-                    .setPrice(BigDecimal.ONE)
-                    .setQuantity(1)
-                    .setProduct(new Product().setId(1L)
-                            .setDescription("desc")
-                            .setTitle("title")
-                            .setPrice(BigDecimal.TWO)
-                            .setImageName("img"))
-                    .setOrder(new Order().setId(1L))));
 
     @Test
     void placeOrder() {
-        when(cartService.isEmpty()).thenReturn(Boolean.FALSE);
-        when(cartService.getProductIdsInCart()).thenReturn(Set.of(1L, 2L));
-        when(cartService.getProductQuantity(any())).thenReturn(2, 1);
+        when(cartService.isEmpty(session)).thenReturn(Mono.just(Boolean.FALSE));
+        when(cartService.getProductIdsInCart(session)).thenReturn(Flux.fromStream(Stream.of(1L, 2L)));
+        when(cartService.getProductQuantity(anyLong(), any(WebSession.class)))
+                .thenReturn(Mono.just(2))
+                .thenReturn(Mono.just(1));
         Product one = mock(Product.class);
         Product two = mock(Product.class);
         when(one.getPrice()).thenReturn(BigDecimal.valueOf(100));
         when(two.getPrice()).thenReturn(BigDecimal.valueOf(500));
-        when(productRepository.findAllById(any())).thenReturn(List.of(one, two));
-        orderService.placeOrder();
+        when(productRepository.findAllById(any(Flux.class))).thenReturn(Flux.just(one, two));
+        Order order = new Order().setId(1L);
+        when(orderRepository.save(any(Order.class))).thenReturn(Mono.just(order));
+        when(orderItemRepository.saveAll(any(Iterable.class))).thenReturn(Flux.empty());
+        when(cartService.clearCart(any())).thenReturn(Mono.empty());
+        Mono<Long> result = orderService.placeOrder(session);
 
-        ArgumentCaptor<Order> argumentCaptor = ArgumentCaptor.forClass(Order.class);
-        verify(orderRepository).save(argumentCaptor.capture());
-        Order value = argumentCaptor.getValue();
-        assertEquals(new BigDecimal(700), value.getTotalPrice());
-        assertEquals(2, value.getOrderItems().size());
-        assertNotNull(value.getNumber());
-        verify(cartService).clearCart();
+        StepVerifier.create(result)
+                .assertNext(s -> {
+                    ArgumentCaptor<Order> argumentCaptor = ArgumentCaptor.forClass(Order.class);
+                    verify(orderRepository, times(1)).save(argumentCaptor.capture());
+                    Order value = argumentCaptor.getValue();
+                    assertEquals(new BigDecimal(700), value.getTotalPrice());
+                    assertNotNull(value.getNumber());
+                    verify(orderItemRepository, times(1)).saveAll(any(Iterable.class));
+                    verify(cartService, times(1)).clearCart(any(WebSession.class));
+                }).verifyComplete();
     }
 
     @Test
     void getOrder() {
-        when(orderRepository.findById(any()))
-                .thenReturn(Optional.of(testOrder));
-        OrderDto order = orderService.getOrder(1L);
-        assertAll("Проверка получения заказа (OrderDto)",
-                () -> assertEquals(3L, order.getId()),
-                () -> assertEquals("N1234", order.getNumber()),
-                () -> assertEquals("10.00", order.getTotalPrice()),
-                () -> assertEquals(1, order.getItems().size())
-        );
-        OrderDto.ProductViewDto productViewDto = order.getItems().get(0);
-        assertAll("Проверка получения заказа (OrderDto.ProductViewDto)",
-                () -> assertEquals(1, productViewDto.getId()),
-                () -> assertEquals(1, productViewDto.getQuantity()),
-                () -> assertEquals("1.00", productViewDto.getTotalPrice()),
-                () -> assertEquals("1.00", productViewDto.getPrice()),
-                () -> assertEquals("title", productViewDto.getTitle()),
-                () -> assertEquals("desc", productViewDto.getDescription()),
-                () -> assertEquals("img", productViewDto.getImageName()));
+        when(orderDao.findOrderWithProducts(anyLong())).thenReturn(Mono.just(Mockito.mock(OrderDto.class)));
+        Mono<OrderDto> result = orderService.getOrder(1L);
+
+        StepVerifier.create(result)
+                        .assertNext(o -> {
+                            verify(orderDao, times(1)).findOrderWithProducts(1L);
+                        }).verifyComplete();
     }
 
     @Test
     void getOrders() {
-        when(orderRepository.findAll(any(Sort.class))).thenReturn(List.of(testOrder));
-        List<OrderItemDto> orders = orderService.getOrders();
-        assertEquals(1, orders.size());
-        OrderItemDto orderItemDto = orders.get(0);
-        assertAll("Проверка получения заказов (OrderItemDto)",
-                () -> assertEquals("N1234", orderItemDto.getNumber()),
-                () -> assertEquals("10.00", orderItemDto.getTotalPrice()),
-                () -> assertEquals(3L, orderItemDto.getId()));
-        assertEquals(1, orders.get(0).getItems().size());
-        OrderItemDto.ProductViewDto productViewDto = orderItemDto.getItems().get(0);
-        assertAll("Проверка получения заказов (OrderItemDto)",
-                () -> assertEquals("1.00", productViewDto.getPrice()),
-                () -> assertEquals("title", productViewDto.getTitle()),
-                () -> assertEquals(1, productViewDto.getQuantity()));
-    }
-
-    @Test
-    void generateOrderNumber() {
-        assertEquals(10, orderService.generateOrderNumber().length());
+        when(orderDao.findAllOrdersWithItems()).thenReturn(Flux.just(Mockito.mock(OrderItemDto.class)));
+        Flux<OrderItemDto> result = orderService.getOrders();
+        StepVerifier.create(result)
+                .assertNext(o -> {
+                    verify(orderDao, times(1)).findAllOrdersWithItems();
+                }).verifyComplete();
     }
 }

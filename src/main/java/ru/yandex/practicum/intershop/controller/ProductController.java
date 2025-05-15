@@ -1,14 +1,15 @@
 package ru.yandex.practicum.intershop.controller;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.reactive.result.view.Rendering;
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebSession;
+import reactor.core.publisher.Mono;
 import ru.yandex.practicum.intershop.dto.Action;
 import ru.yandex.practicum.intershop.dto.CreateProductDto;
-import ru.yandex.practicum.intershop.dto.ProductItemDto;
 import ru.yandex.practicum.intershop.service.CartService;
 import ru.yandex.practicum.intershop.service.ProductService;
 import ru.yandex.practicum.intershop.utils.DataBaseRequestUtils;
@@ -25,46 +26,45 @@ public class ProductController {
     }
 
     @GetMapping
-    public String getProducts(Model model,
-                              @RequestParam(value = "page", defaultValue = "0") int page,
-                              @RequestParam(value = "pageSize", defaultValue = "10") int pageSize,
-                              @RequestParam(value = "sort", required = false) String sortField,
-                              @RequestParam(value = "search", required = false) String search) {
+    public Mono<Rendering> getProducts(
+                                   @RequestParam(value = "page", defaultValue = "0") int page,
+                                   @RequestParam(value = "pageSize", defaultValue = "10") int pageSize,
+                                   @RequestParam(value = "sort", required = false) String sortField,
+                                   @RequestParam(value = "search", required = false) String search, ServerWebExchange exchange) {
         PageRequest pageRequest = DataBaseRequestUtils.productView(page, pageSize, sortField);
-        Page<ProductItemDto> products = productService.getProducts(pageRequest, search);
-        model.addAttribute("newProduct", new CreateProductDto());
-        model.addAttribute("page", products);
-        model.addAttribute("pageSize", pageSize);
-        model.addAttribute("sort", sortField);
-        model.addAttribute("search", search);
-        return "main";
+        return exchange.getSession().flatMap(session ->  productService.getProducts(session, pageRequest, search))
+                .map(products -> Rendering.view("main")
+                        .modelAttribute("newProduct", new CreateProductDto())
+                        .modelAttribute("page", products)
+                        .modelAttribute("pageSize", pageSize)
+                        .modelAttribute("sort", sortField)
+                        .modelAttribute("search", search)
+                        .build());
     }
 
     @PutMapping({"/{productId}/updateInCart"})
-    public String updateInCart(@PathVariable Long productId,
-                               @RequestParam Action action,
-                               @RequestHeader(value = "Referer", required = false) String referer) {
-        switch (action) {
-            case PLUS -> cartService.plusToCart(productId);
-            case MINUS -> cartService.minusFromCart(productId);
-            case DELETE -> cartService.deleteFromCart(productId);
-        }
-        return "redirect:" + referer;
+    public Mono<Rendering> updateInCart(@PathVariable Long productId,
+                                        @RequestBody String action,
+                                        ServerWebExchange exchange,
+                                        @RequestHeader(value = "Referer", required = false) String referer) {
+        return exchange.getSession().flatMap(session -> switch (Action.valueOf(action)) {
+            case PLUS -> cartService.plusToCart(productId, session);
+            case MINUS -> cartService.minusFromCart(productId, session);
+            case DELETE -> cartService.deleteFromCart(productId, session);
+        }).then(Mono.just(Rendering.redirectTo(referer).build()));
     }
 
 
     @GetMapping("/{productId}")
-    public String getProduct(Model model, @PathVariable Long productId) {
-        ProductItemDto productDto = productService.getProduct(productId);
-        model.addAttribute("product", productDto);
-        return "item";
+    public Mono<Rendering> getProduct(@PathVariable Long productId, WebSession session) {
+        return productService.getProduct(session, productId)
+                        .map(dto -> Rendering.view("item").modelAttribute("product", dto).build());
     }
 
     @PostMapping
-    public String createProduct(@ModelAttribute("newProduct") CreateProductDto productDto,
+    public Mono<Rendering> createProduct(@ModelAttribute("newProduct") CreateProductDto productDto,
                              @RequestHeader(value = "Referer", required = false) String referer,
-                             @RequestPart(value = "image", required = false) MultipartFile image) {
-        productService.createProduct(productDto, image);
-        return "redirect:" + referer;
+                             @RequestPart(value = "image", required = false) Mono<FilePart> image) {
+        return productService.createProduct(productDto, image).then(Mono.just(Rendering.redirectTo(referer).build()));
     }
 }

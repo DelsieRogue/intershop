@@ -2,8 +2,10 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 
 <head>
+    <meta charset="UTF-8">
     <title>Витрина товаров</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <script th:src="@{/scripts/script.js}" defer></script>
 </head>
 
 <body>
@@ -34,21 +36,20 @@
             <!-- В text описание товара -->
             <span th:text="${product.description}"></span>
         </p>
-        <!-- 
+        <!--
 		В action ссылка на изменение количества товара в корзине.
 		Передается параметр запроса action=[minus|plus]
 	-->
-        <form th:action="@{/product/{productId}/updateInCart(productId=${product.id})}" method="post">
-            <input type="hidden" name="_method" value="PUT" />
-            <span th:if="${product.quantity} != null">
-                <button name="action" value="MINUS">-</button>
-                <!-- В text количество товара в корзине -->
+        <div>
+            <span th:if="${product.quantity != 0}">
+                <button value="MINUS" th:onclick="sendAction([[${product.id}]], 'MINUS')">-</button>
                 <span th:text="${product.quantity}"></span>
-                <button name="action" value="PLUS">+</button>
+                <button value="PLUS" th:onclick="sendAction([[${product.id}]], 'PLUS')">+</button>
             </span>
-            <!-- В if true, если товар еще не был добавлен в корзину, false, если уже был -->
-            <button name="action" value="PLUS" th:if="${product.quantity} == null" >В корзину</button>
-        </form>
+            <button value="PLUS" th:if="${product.quantity == 0}"
+                    th:onclick="sendAction([[${product.id}]], 'PLUS')"
+                    style="float:right;">В корзину</button>
+        </div>
     </div>
 </body>
 

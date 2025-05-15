@@ -3,12 +3,12 @@ package ru.yandex.practicum.intershop.service;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
+import reactor.core.publisher.Mono;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -20,20 +20,18 @@ public class DocumentService {
         this.serverPath = serverPath;
     }
 
-    public Optional<String> save(MultipartFile image) {
-        if (image == null || image.isEmpty()) {
-            log.warn("Файл отсутствует/пустой, загрузка не выполнена.");
-            return Optional.empty();
-        }
-        try {
-            String extension = FilenameUtils.getExtension(image.getOriginalFilename());
+    public Mono<String> save(Mono<FilePart> image) {
+        return image.flatMap(img -> {
+            if (img.headers().getContentLength() == 0) {
+                log.warn("Файл отсутствует/пустой, загрузка не выполнена.");
+                return Mono.empty();
+            }
+            String extension = FilenameUtils.getExtension(img.filename());
             String fileName = "file_" + UUID.randomUUID() + "." + extension;
             File destinationFile = new File(serverPath, fileName);
-            image.transferTo(destinationFile);
-            return Optional.of(fileName);
-        } catch (IOException e) {
-            log.error("Ошибка сохранения файла", e);
-            throw new IllegalArgumentException("Ошибка сохранения файла");
-        }
+            return img.transferTo(destinationFile).thenReturn(fileName);
+        })
+                .doOnError(e -> log.error("Ошибка сохранения файла", e))
+                .onErrorMap(IOException.class, e -> new IllegalStateException("Ошибка сохранения файла", e));
     }
 }

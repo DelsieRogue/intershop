@@ -1,17 +1,21 @@
 package ru.yandex.practicum.intershop.service;
 
 import jakarta.annotation.Nullable;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-import org.thymeleaf.util.StringUtils;
+import org.springframework.web.server.WebSession;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import ru.yandex.practicum.intershop.dto.CreateProductDto;
 import ru.yandex.practicum.intershop.dto.ProductItemDto;
 import ru.yandex.practicum.intershop.entity.Product;
 import ru.yandex.practicum.intershop.mapper.ProductMapper;
-import ru.yandex.practicum.intershop.repository.ProductRepository;
+import ru.yandex.practicum.intershop.db.repository.ProductRepository;
 
 @Service
 public class ProductService {
@@ -28,23 +32,37 @@ public class ProductService {
         this.documentService = documentService;
     }
 
-    public Page<ProductItemDto> getProducts(PageRequest pageRequest, @Nullable String search) {
-        Page<Product> productPage  = StringUtils.isEmpty(search)
-                ? productRepository.findAll(pageRequest)
-                : productRepository.findByTitleContainingOrDescriptionContaining(pageRequest, search, search);
-        return productPage.map(p -> productMapper.toProductItemDto(p, cartService.getProductQuantity(p.getId())));
+    public Mono<Page<ProductItemDto>> getProducts(WebSession session, PageRequest pageRequest, @Nullable String search) {
+        Flux<Product> productFlux;
+        Mono<Long> count;
+        if (StringUtils.isEmpty(search)) {
+            productFlux = productRepository.findAllBy(pageRequest);
+            count = productRepository.count();
+        } else {
+            productFlux = productRepository.findByTitleContainingOrDescriptionContaining(pageRequest, search, search);
+            count = productRepository.countAllByTitleContainingOrDescriptionContaining(search, search);
+        }
+
+        Flux<ProductItemDto> productDtoFlux = productFlux
+                .flatMap(p -> cartService.getProductQuantity(p.getId(), session)
+                        .map(quantity -> productMapper.toProductItemDto(p, quantity)));
+
+        return Mono.zip(productDtoFlux.collectList(), count)
+                .map(s -> new PageImpl<>(s.getT1(), pageRequest, s.getT2()));
     }
 
-    public ProductItemDto getProduct(Long productId) {
+    public Mono<ProductItemDto> getProduct(WebSession session, Long productId) {
         return productRepository.findById(productId)
-                .map(p -> productMapper.toProductItemDto(p, cartService.getProductQuantity(p.getId())))
-                .orElseThrow();
+                .flatMap(p -> cartService.getProductQuantity(p.getId(), session)
+                        .map(quantity -> productMapper.toProductItemDto(p, quantity)));
     }
 
     @Transactional
-    public Long createProduct(CreateProductDto productDto, MultipartFile image) {
-        String imageName = documentService.save(image).orElse(null);
-        Product product = productRepository.save(productMapper.toProduct(productDto, imageName));
-        return product.getId();
+    public Mono<Long> createProduct(CreateProductDto productDto, Mono<FilePart> image) {
+        return documentService.save(image)
+                .defaultIfEmpty(StringUtils.EMPTY)
+                .flatMap(imgName -> productRepository.save(productMapper
+                                .toProduct(productDto, StringUtils.isNotBlank(imgName) ? imgName : null)))
+                .map(Product::getId);
     }
 }

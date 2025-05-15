@@ -2,27 +2,29 @@ spring:
   application:
     name: intershop
   liquibase:
-    change-log: classpath:/db/changelog/db.changelog-master.xml
-  datasource:
     url: jdbc:postgresql://localhost:5432/postgres?currentSchema=intershop
+    user: postgres
+    password: postgres
+    change-log: classpath:/db/changelog/db.changelog-master.xml
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/postgres?schema=intershop
     username: postgres
     password: postgres
-    driver-class-name: org.postgresql.Driver
-server:
-  servlet:
-    context-path: /intershop
+    pool:
+      initial-size: 5
+      max-size: 20
+      max-idle-time: 30m
+  webflux:
+    base-path: /intershop
+    hiddenmethod:
+      filter:
+        enabled: true
+  thymeleaf:
+    encoding: UTF-8
 
 image:
   folder:
     server:
-      path: ${IMAGES_DIR:${user.dir}/uploaded-image}
+      path: ${IMAGES_DIR:${user.dir}/uploaded-images}
     client:
       path: /image/
-
-logging:
-  level:
-    org:
-      springframework:
-        boot:
-          autoconfigure:
-            logging: INFO

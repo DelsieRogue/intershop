@@ -2,8 +2,10 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 
 <head>
+    <meta charset="UTF-8">
     <title>Корзина товаров</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <script th:src="@{/scripts/script.js}" defer></script>
 </head>
 
 <body>
@@ -44,14 +46,16 @@
                     		В action ссылка на изменение количества товара в корзине.
                     		Передается параметр запроса action=[minus|plus]
                     	-->
-                        <form th:action="@{/product/{productId}/updateInCart(productId=${product.id})}" method="post">
-                            <input type="hidden" name="_method" value="PUT" />
-                            <button name="action" value="MINUS">-</button>
-                            <!-- В text количество товара в корзине -->
-                            <span th:text="${product.quantity}"></span>
-                            <button name="action" value="PLUS">+</button>
-                            <button name="action" value="DELETE" style="float:right;">&cross;</button>
-                        </form>
+                        <div>
+                            <span th:if="${product.quantity != 0}">
+                                <button value="MINUS" th:onclick="sendAction([[${product.id}]], 'MINUS')">-</button>
+                                <span th:text="${product.quantity}"></span>
+                                <button value="PLUS" th:onclick="sendAction([[${product.id}]], 'PLUS')">+</button>
+                            </span>
+                            <button value="PLUS" th:if="${product.quantity == 0}"
+                                    th:onclick="sendAction([[${product.id}]], 'PLUS')"
+                                    style="float:right;">В корзину</button>
+                        </div>
                     </td>
                 </tr>
             </table>

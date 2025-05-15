@@ -31,6 +31,4 @@ build/
 
 ### VS Code ###
 .vscode/
-
-
-IMAGES_DIR=/Users/ildan/Desktop/Yandex/intershop/uploaded-images
+/postgres-data/

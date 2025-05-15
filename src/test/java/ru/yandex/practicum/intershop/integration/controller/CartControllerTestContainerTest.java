@@ -2,40 +2,48 @@ package ru.yandex.practicum.intershop.integration.controller;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.mock.web.MockHttpSession;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.test.web.reactive.server.FluxExchangeResult;
 import ru.yandex.practicum.intershop.integration.AbstractControllerMvcTest;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
-@Transactional
 class CartControllerTestContainerTest extends AbstractControllerMvcTest {
 
-    MockHttpSession session = new MockHttpSession();
 
     @Test
-    void getCart() throws Exception {
-        mockMvc.perform(put("/product/{id}/updateInCart", 1).session(session)
-                .param("action", "PLUS")
-                .header("Referer", "/product"));
-        mockMvc.perform(get("/cart").session(session))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType("text/html;charset=UTF-8"))
-                .andExpect(view().name("cart"))
-                .andExpect(model().attributeExists("isEmpty", "cart"));
+    void getCart() {
+        FluxExchangeResult<Void> exchangeResult = webTestClient.put()
+                .uri("/product/{id}/updateInCart",1)
+                .bodyValue("PLUS")
+                .header("Referer", "/product")
+                .exchange().expectStatus().is3xxRedirection().returnResult(Void.class);
+        String session = exchangeResult.getResponseCookies().getFirst("SESSION").getValue();
+        webTestClient.get()
+                .uri("/cart")
+                .cookie("SESSION", session)
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType("text/html")
+                .expectBody(String.class)
+                .consumeWith(response -> {
+                    assertTrue(response.getResponseBody().contains("Product 1"));
+                });
     }
 
     @Test
-    void placeOrder() throws Exception {
-        mockMvc.perform(put("/product/{id}/updateInCart", 1).session(session)
-                .param("action", "PLUS")
-                .header("Referer", "/product"));
-        mockMvc.perform(post("/cart/confirm").session(session))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrlPattern("/order/*"))
-                .andExpect(flash().attributeExists("isNewOrder"));
+    void placeOrder() {
+        FluxExchangeResult<Void> exchangeResult = webTestClient.put()
+                .uri("/product/{id}/updateInCart",1)
+                .bodyValue("PLUS")
+                .header("Referer", "/product")
+                .exchange().expectStatus().is3xxRedirection().returnResult(Void.class);
+        String session = exchangeResult.getResponseCookies().getFirst("SESSION").getValue();
+        webTestClient.post()
+                .uri("/cart/confirm")
+                .cookie("SESSION", session)
+                .exchange()
+                .expectStatus().is3xxRedirection();
     }
 
 }

@@ -2,37 +2,49 @@ package ru.yandex.practicum.intershop.integration.repository;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Transactional;
-import ru.yandex.practicum.intershop.integration.AbstractDataJpaTest;
-import ru.yandex.practicum.intershop.integration.AbstractTestContainerTest;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
+import ru.yandex.practicum.intershop.db.repository.ProductRepository;
 import ru.yandex.practicum.intershop.entity.Product;
-import ru.yandex.practicum.intershop.repository.ProductRepository;
+import ru.yandex.practicum.intershop.integration.AbstractDataR2dbcTest;
 
-import java.util.List;
-import java.util.Set;
-
-import static org.junit.jupiter.api.Assertions.*;
-
-@Transactional
-class ProductRepositoryTest extends AbstractDataJpaTest {
+class ProductRepositoryTest extends AbstractDataR2dbcTest {
 
     @Autowired
     ProductRepository productRepository;
 
     @Test
     void findByTitleContainingOrDescriptionContaining() {
-        Page<Product> product = productRepository.findByTitleContainingOrDescriptionContaining(
-                PageRequest.of(0, 10), "Product", "Product"
-        );
-        assertEquals(9, product.getContent().size());
+        PageRequest request = PageRequest.of(0, 10);
+        Flux<Product> productFlux = productRepository
+                .findByTitleContainingOrDescriptionContaining(request, "Product 1", "Product 1");
+
+        StepVerifier.create(productFlux)
+                .expectNextCount(1)
+                .verifyComplete();
+    }
+
+    @Test
+    void countAllByTitleContainingOrDescriptionContaining() {
+        Mono<Long> product = productRepository
+                .countAllByTitleContainingOrDescriptionContaining("Product 1", "Product 1");
+
+        StepVerifier.create(product)
+                .expectNext(1L)
+                .verifyComplete();
+
     }
 
     @Test
     void findAllById() {
-        List<Product> result = productRepository.findAllById(Set.of(1L, 2L, 3L));
-        assertEquals(3, result.size());
+        PageRequest request = PageRequest.of(0, 10);
+        Flux<Product> productFlux = productRepository.findAllBy(request);
+
+        StepVerifier.create(productFlux)
+                .expectNextCount(9)
+                .verifyComplete();
     }
 }
