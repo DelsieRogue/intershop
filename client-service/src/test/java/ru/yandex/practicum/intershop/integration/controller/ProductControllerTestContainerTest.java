@@ -3,11 +3,7 @@ package ru.yandex.practicum.intershop.integration.controller;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.mock.web.MockPart;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.BodyInserters;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import ru.yandex.practicum.intershop.integration.AbstractControllerMvcTest;
 
 import java.io.IOException;
@@ -15,8 +11,6 @@ import java.io.IOException;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 class ProductControllerTestContainerTest extends AbstractControllerMvcTest {

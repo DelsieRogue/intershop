@@ -21,7 +21,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: client-service/Dockerfile
     container_name: intershop
     ports:
       - "8080:8080"
@@ -37,4 +37,4 @@ services:
       - SPRING_LIQUIBASE_PASSWORD=postgres
       - IMAGES_DIR=/app/uploaded-images
     volumes:
-      - ./uploaded-images:/app/uploaded-images
+      - ./client-service/uploaded-images:/app/uploaded-images

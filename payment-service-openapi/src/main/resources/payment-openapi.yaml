@@ -1,0 +1,89 @@
+openapi: 3.0.3
+info:
+  title: Payment Service API
+  version: 1.0.0
+  description: Реактивный REST API для получения баланса и осуществления платежа.
+
+servers:
+  - url: http://localhost:8081
+    description: Локальный сервер
+
+paths:
+  /payment/balance:
+    get:
+      summary: Получение текущего баланса
+      operationId: getBalance
+      tags:
+        - payment
+      responses:
+        '200':
+          description: Баланс успешно получен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalanceResponse'
+
+  /payment/pay:
+    post:
+      summary: Проведение платежа
+      operationId: processPayment
+      tags:
+        - payment
+      requestBody:
+        description: Сумма для списания
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        '200':
+          description: Платёж успешно выполнен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '400':
+          description: Недостаточно средств
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    BalanceResponse:
+      type: object
+      properties:
+        balance:
+          type: number
+          format: double
+          example: 1500.00
+
+    PaymentRequest:
+      type: object
+      required:
+        - amount
+      properties:
+        amount:
+          type: number
+          format: double
+          example: 300.00
+
+    PaymentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        newBalance:
+          type: number
+          format: double
+          example: 1200.00
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Недостаточно средств для проведения платежа
