@@ -21,7 +21,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BalanceResponse'
+                $ref: '#/components/schemas/Balance'
+        '5XX':
+          description: Ошибка на стороне сервиса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /payment/pay:
     post:
@@ -35,51 +41,33 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PaymentRequest'
+              $ref: '#/components/schemas/Amount'
       responses:
         '200':
           description: Платёж успешно выполнен
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaymentResponse'
         '400':
           description: Недостаточно средств
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '5XX':
+          description: Ошибка на стороне сервиса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 
 components:
   schemas:
-    BalanceResponse:
-      type: object
-      properties:
-        balance:
-          type: number
-          format: double
-          example: 1500.00
+    Balance:
+      type: number
+      example: 1500.00
 
-    PaymentRequest:
-      type: object
-      required:
-        - amount
-      properties:
-        amount:
-          type: number
-          format: double
-          example: 300.00
-
-    PaymentResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        newBalance:
-          type: number
-          format: double
-          example: 1200.00
+    Amount:
+      type: number
+      example: 300.00
 
     ErrorResponse:
       type: object

@@ -109,6 +109,32 @@
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/../payment-service-openapi/src/main/resources/payment-openapi.yaml</inputSpec>
+                            <generatorName>java</generatorName>
+                            <apiPackage>ru.yandex.practicum.payment.client.api</apiPackage>
+                            <invokerPackage>ru.yandex.practicum.payment.client.invoker</invokerPackage>
+                            <modelPackage>ru.yandex.practicum.payment.client.dto</modelPackage>
+                            <generateModelTests>false</generateModelTests>
+                            <generateApiTests>false</generateApiTests>
+                            <configOptions>
+                                <library>webclient</library>
+                                <useJakartaEe>true</useJakartaEe>
+                                <openApiNullable>false</openApiNullable>
+                                <typeMapping>number=BigDecimal</typeMapping>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 

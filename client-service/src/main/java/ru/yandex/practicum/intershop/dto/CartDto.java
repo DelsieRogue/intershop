@@ -14,6 +14,8 @@ import java.util.List;
 public class CartDto {
     private String totalPrice;
     private List<ProductViewDto> products;
+    private Boolean isCanBuy;
+    private String reason;
 
     @Data
     @Accessors(chain = true)

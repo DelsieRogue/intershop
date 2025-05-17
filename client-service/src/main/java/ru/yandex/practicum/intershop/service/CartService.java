@@ -1,14 +1,16 @@
 package ru.yandex.practicum.intershop.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClientException;
 import org.springframework.web.server.WebSession;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import ru.yandex.practicum.intershop.db.repository.ProductRepository;
 import ru.yandex.practicum.intershop.dto.CartDto;
 import ru.yandex.practicum.intershop.entity.Product;
 import ru.yandex.practicum.intershop.mapper.ProductMapper;
-import ru.yandex.practicum.intershop.db.repository.ProductRepository;
 import ru.yandex.practicum.intershop.service.cart.Cart;
+import ru.yandex.practicum.payment.client.api.PaymentApi;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -22,10 +24,12 @@ public class CartService {
     private static final String CART_SESSION_KEY = "user_cart";
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
+    private final PaymentApi paymentApi;
 
-    public CartService(ProductRepository productRepository, ProductMapper productMapper) {
+    public CartService(ProductRepository productRepository, ProductMapper productMapper, PaymentApi paymentApi) {
         this.productRepository = productRepository;
         this.productMapper = productMapper;
+        this.paymentApi = paymentApi;
     }
 
     private Mono<Cart> getCartFromSession(WebSession session) {
@@ -80,7 +84,7 @@ public class CartService {
                 .flatMap(cart ->  {
                     Set<Long> productIdsInCart = cart.getProductIdsInCart();
                     return productRepository.findAllById(productIdsInCart).collectList()
-                            .map(products -> {
+                            .flatMap(products -> {
                                 BigDecimal totalPrice = BigDecimal.ZERO;
                                 List<CartDto.ProductViewDto> productViewItemList = new ArrayList<>();
                                 for (Product product : products) {
@@ -88,8 +92,19 @@ public class CartService {
                                     totalPrice = totalPrice.add(product.getPrice().multiply(BigDecimal.valueOf(quantity)));
                                     productViewItemList.add(productMapper.toCartProductViewDto(product, quantity));
                                 }
-                                return new CartDto().setProducts(productViewItemList)
-                                        .setTotalPrice(totalPrice.setScale(2, RoundingMode.HALF_UP).toString());
+                                
+                                final BigDecimal finalTotalPrice = totalPrice.setScale(2, RoundingMode.HALF_UP);
+                                CartDto cartDto = new CartDto()
+                                    .setProducts(productViewItemList)
+                                    .setTotalPrice(finalTotalPrice.toString());
+
+                                return paymentApi.getBalance()
+                                        .filter(balance -> finalTotalPrice.compareTo(balance) <= 0)
+                                        .map(balance -> cartDto.setIsCanBuy(true))
+                                        .switchIfEmpty(Mono.just(cartDto.setIsCanBuy(false).setReason("Сумма заказа превышает баланс")))
+                                        .onErrorResume(WebClientException.class, error ->
+                                                Mono.just(cartDto.setIsCanBuy(false).setReason("Сервис платежей недоступен")))
+                                        .defaultIfEmpty(cartDto.setIsCanBuy(false));
                             });
                 });
     }

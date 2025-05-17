@@ -19,9 +19,19 @@
 			<artifactId>spring-boot-starter-webflux</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
+			<version>2.8.5</version>
+		</dependency>
+		<dependency>
 			<groupId>ru.yandex.practicum</groupId>
 			<artifactId>payment-service-openapi</artifactId>
 			<version>DEV-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.openapitools</groupId>
+			<artifactId>jackson-databind-nullable</artifactId>
+			<version>0.2.1</version>
 		</dependency>
 	</dependencies>
 
@@ -30,6 +40,32 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.openapitools</groupId>
+				<artifactId>openapi-generator-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>${project.basedir}/../payment-service-openapi/src/main/resources/payment-openapi.yaml</inputSpec>
+							<generatorName>spring</generatorName>
+							<apiPackage>ru.yandex.practicum.payment.client.api</apiPackage>
+							<invokerPackage>ru.yandex.practicum.payment.client.invoker</invokerPackage>
+							<modelPackage>ru.yandex.practicum.payment.client.dto</modelPackage>
+							<configOptions>
+								<library>spring-boot</library>
+								<useSpringBoot3>true</useSpringBoot3>
+								<interfaceOnly>true</interfaceOnly>
+								<reactive>true</reactive>
+								<typeMapping>number=BigDecimal</typeMapping>
+								<useTags>true</useTags>
+							</configOptions>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

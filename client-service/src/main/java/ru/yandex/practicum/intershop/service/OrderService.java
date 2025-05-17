@@ -13,6 +13,7 @@ import ru.yandex.practicum.intershop.entity.OrderItem;
 import ru.yandex.practicum.intershop.db.repository.OrderItemRepository;
 import ru.yandex.practicum.intershop.db.repository.OrderRepository;
 import ru.yandex.practicum.intershop.db.repository.ProductRepository;
+import ru.yandex.practicum.payment.client.api.PaymentApi;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -24,15 +25,18 @@ public class OrderService {
     private final OrderItemRepository orderItemRepository;
     private final ProductRepository productRepository;
     private final CartService cartService;
+    private final PaymentApi paymentApi;
 
     public OrderService(OrderDao orderDao, OrderRepository orderRepository,
                         OrderItemRepository orderItemRepository,
-                        ProductRepository productRepository, CartService cartService) {
+                        ProductRepository productRepository, CartService cartService,
+                        PaymentApi paymentApi) {
         this.orderDao = orderDao;
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.productRepository = productRepository;
         this.cartService = cartService;
+        this.paymentApi = paymentApi;
     }
 
     @Transactional
@@ -58,6 +62,7 @@ public class OrderService {
                                 orderItems.forEach(item -> item.setOrderId(savedOrder.getId()));
                                 return orderItemRepository.saveAll(orderItems)
                                         .collectList()
+                                        .then(paymentApi.processPayment(totalPrice))
                                         .then(cartService.clearCart(session))
                                         .thenReturn(savedOrder.getId());
                             });

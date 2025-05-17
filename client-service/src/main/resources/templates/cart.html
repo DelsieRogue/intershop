@@ -74,7 +74,8 @@
             	В if true, если в корзине есть товары, false, если нет
             -->
             <form th:action="@{cart/confirm}" method="post" th:if="${!isEmpty}">
-                <button>Купить</button>
+                <p th:if="${!cart.isCanBuy}" th:text="${cart.reason}"></p>
+                <button th:disabled="${!cart.isCanBuy}">Купить</button>
             </form>
         </td>
     </tr>

@@ -28,3 +28,8 @@ image:
       path: ${IMAGES_DIR:${user.dir}/uploaded-images}
     client:
       path: /image/
+
+api:
+  client:
+    payment-service:
+      url: http://localhost:8082
