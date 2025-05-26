@@ -6,13 +6,12 @@ import org.springframework.web.server.WebSession;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.yandex.practicum.intershop.db.dao.OrderDao;
+import ru.yandex.practicum.intershop.db.repository.OrderItemRepository;
+import ru.yandex.practicum.intershop.db.repository.OrderRepository;
 import ru.yandex.practicum.intershop.dto.OrderDto;
 import ru.yandex.practicum.intershop.dto.OrderItemDto;
 import ru.yandex.practicum.intershop.entity.Order;
 import ru.yandex.practicum.intershop.entity.OrderItem;
-import ru.yandex.practicum.intershop.db.repository.OrderItemRepository;
-import ru.yandex.practicum.intershop.db.repository.OrderRepository;
-import ru.yandex.practicum.intershop.db.repository.ProductRepository;
 import ru.yandex.practicum.payment.client.api.PaymentApi;
 
 import java.math.BigDecimal;
@@ -23,25 +22,24 @@ public class OrderService {
     private final OrderDao orderDao;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
-    private final ProductRepository productRepository;
+    private final ProductCacheService productCacheService;
     private final CartService cartService;
     private final PaymentApi paymentApi;
 
     public OrderService(OrderDao orderDao, OrderRepository orderRepository,
-                        OrderItemRepository orderItemRepository,
-                        ProductRepository productRepository, CartService cartService,
-                        PaymentApi paymentApi) {
+                        OrderItemRepository orderItemRepository, ProductCacheService productCacheService,
+                        CartService cartService, PaymentApi paymentApi) {
         this.orderDao = orderDao;
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
-        this.productRepository = productRepository;
+        this.productCacheService = productCacheService;
         this.cartService = cartService;
         this.paymentApi = paymentApi;
     }
 
     @Transactional
     public Mono<Long> placeOrder(WebSession session) {
-        return productRepository.findAllById(cartService.getProductIdsInCart(session)
+        return productCacheService.findAllById(cartService.getProductIdsInCart(session)
                         .switchIfEmpty(Mono.error(new IllegalStateException("В корзине нет товаров"))))
                 .flatMap(product -> cartService.getProductQuantity(product.getId(), session)
                         .map(quantity -> new OrderItem()

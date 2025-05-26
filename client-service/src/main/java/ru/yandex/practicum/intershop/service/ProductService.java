@@ -23,23 +23,26 @@ public class ProductService {
     private final ProductMapper productMapper;
     private final CartService cartService;
     private final DocumentService documentService;
+    private final ProductCacheService productCacheService;
 
     public ProductService(ProductRepository productRepository, ProductMapper productMapper,
-                          CartService cartService, DocumentService documentService) {
+                          CartService cartService, DocumentService documentService,
+                          ProductCacheService productCacheService) {
         this.productRepository = productRepository;
         this.productMapper = productMapper;
         this.cartService = cartService;
         this.documentService = documentService;
+        this.productCacheService = productCacheService;
     }
 
     public Mono<Page<ProductItemDto>> getProducts(WebSession session, PageRequest pageRequest, @Nullable String search) {
         Flux<Product> productFlux;
         Mono<Long> count;
         if (StringUtils.isEmpty(search)) {
-            productFlux = productRepository.findAllBy(pageRequest);
+            productFlux = productCacheService.findAllBy(pageRequest);
             count = productRepository.count();
         } else {
-            productFlux = productRepository.findByTitleContainingOrDescriptionContaining(pageRequest, search, search);
+            productFlux = productCacheService.findByTitleContainingOrDescriptionContaining(pageRequest, search);
             count = productRepository.countAllByTitleContainingOrDescriptionContaining(search, search);
         }
 
@@ -52,7 +55,7 @@ public class ProductService {
     }
 
     public Mono<ProductItemDto> getProduct(WebSession session, Long productId) {
-        return productRepository.findById(productId)
+        return productCacheService.findById(productId)
                 .flatMap(p -> cartService.getProductQuantity(p.getId(), session)
                         .map(quantity -> productMapper.toProductItemDto(p, quantity)));
     }
@@ -61,7 +64,7 @@ public class ProductService {
     public Mono<Long> createProduct(CreateProductDto productDto, Mono<FilePart> image) {
         return documentService.save(image)
                 .defaultIfEmpty(StringUtils.EMPTY)
-                .flatMap(imgName -> productRepository.save(productMapper
+                .flatMap(imgName -> productCacheService.save(productMapper
                                 .toProduct(productDto, StringUtils.isNotBlank(imgName) ? imgName : null)))
                 .map(Product::getId);
     }

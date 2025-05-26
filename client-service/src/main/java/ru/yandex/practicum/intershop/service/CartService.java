@@ -22,12 +22,12 @@ import java.util.Set;
 @Service
 public class CartService {
     private static final String CART_SESSION_KEY = "user_cart";
-    private final ProductRepository productRepository;
+    private final ProductCacheService productCacheService;
     private final ProductMapper productMapper;
     private final PaymentApi paymentApi;
 
-    public CartService(ProductRepository productRepository, ProductMapper productMapper, PaymentApi paymentApi) {
-        this.productRepository = productRepository;
+    public CartService(ProductCacheService productCacheService, ProductMapper productMapper, PaymentApi paymentApi) {
+        this.productCacheService = productCacheService;
         this.productMapper = productMapper;
         this.paymentApi = paymentApi;
     }
@@ -83,7 +83,7 @@ public class CartService {
         return getCartFromSession(session)
                 .flatMap(cart ->  {
                     Set<Long> productIdsInCart = cart.getProductIdsInCart();
-                    return productRepository.findAllById(productIdsInCart).collectList()
+                    return productCacheService.findAllById(Flux.fromIterable(productIdsInCart)).collectList()
                             .flatMap(products -> {
                                 BigDecimal totalPrice = BigDecimal.ZERO;
                                 List<CartDto.ProductViewDto> productViewItemList = new ArrayList<>();

@@ -18,15 +18,30 @@ services:
       timeout: 5s
       retries: 5
 
-  app:
+  redis:
+    image: redis:7
+    container_name: redis_cache
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis-data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  client-service:
     build:
       context: .
-      dockerfile: client-service/Dockerfile
-    container_name: intershop
+      dockerfile: ./client-service/Dockerfile
+    container_name: client-service
     ports:
       - "8080:8080"
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     environment:
       - SPRING_R2DBC_URL=r2dbc:postgresql://db:5432/postgres
@@ -36,5 +51,20 @@ services:
       - SPRING_LIQUIBASE_USER=postgres
       - SPRING_LIQUIBASE_PASSWORD=postgres
       - IMAGES_DIR=/app/uploaded-images
+      - SPRING_DATA_REDIS_HOST=redis
+      - API_CLIENT_PAYMENT_SERVICE_URL=http://payment-service:8082
     volumes:
       - ./client-service/uploaded-images:/app/uploaded-images
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: ./payment-service/Dockerfile
+    container_name: payment-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy

@@ -1,6 +1,7 @@
 # Онлайн магазин
 
 Это веб-приложение онлайн магазина. На реактивном стеке.
+Использует сервис оплаты. Кеширует потенциально частые запросы.
 
 ## Запуск тестов
 
@@ -17,9 +18,8 @@ mvn clean install
 
 Для локального запуска (нужна БД)
 ```bash
-mvn clean install
-chmod 777 ./target/intershop-DEV-SNAPSHOT.jar
-./target/intershop-DEV-SNAPSHOT.jar
+mvn clean package -DskipTests
+java -jar client-service/target/client-service-*.jar & java -jar payment-service/target/payment-service-*.jar
 ```
 
 Для запуска приложения в контейнере:

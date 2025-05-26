@@ -17,6 +17,10 @@ import ru.yandex.practicum.intershop.dto.CreateProductDto;
 import ru.yandex.practicum.intershop.dto.ProductItemDto;
 import ru.yandex.practicum.intershop.entity.Product;
 import ru.yandex.practicum.intershop.mapper.ProductMapperImpl;
+import ru.yandex.practicum.intershop.service.CartService;
+import ru.yandex.practicum.intershop.service.DocumentService;
+import ru.yandex.practicum.intershop.service.ProductCacheService;
+import ru.yandex.practicum.intershop.service.ProductService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -36,6 +40,8 @@ class ProductServiceTest {
     @MockitoBean
     ProductRepository productRepository;
     @MockitoBean
+    ProductCacheService productCacheService;
+    @MockitoBean
     CartService cartService;
     @MockitoBean
     DocumentService documentService;
@@ -54,7 +60,7 @@ class ProductServiceTest {
     void getProducts_without_search() {
         PageRequest pageRequest = Mockito.mock(PageRequest.class);
         when(productRepository.count()).thenReturn(Mono.just(1L));
-        when(productRepository.findAllBy(any(PageRequest.class)))
+        when(productCacheService.findAllBy(any(PageRequest.class)))
                 .thenReturn(Flux.just(testProduct));
         when(cartService.getProductQuantity(1L, session))
                 .thenReturn(Mono.just(2));
@@ -62,7 +68,7 @@ class ProductServiceTest {
         Mono<Page<ProductItemDto>> result = productService.getProducts(session, pageRequest, null);
         StepVerifier.create(result)
                         .assertNext(s -> {
-                            verify(productRepository, times(1)).findAllBy(eq(pageRequest));
+                            verify(productCacheService, times(1)).findAllBy(eq(pageRequest));
                             assertEquals(1, s.getContent().size());
                             ProductItemDto productItemDto = s.getContent().get(0);
                             assertProductItemDto(productItemDto, "Проверка поиска продуктов без фильтра", 2);
@@ -73,7 +79,7 @@ class ProductServiceTest {
     void getProducts_with_search() {
         PageRequest pageRequest = Mockito.mock(PageRequest.class);
         when(productRepository.countAllByTitleContainingOrDescriptionContaining(any(), any())).thenReturn(Mono.just(1L));
-        when(productRepository.findByTitleContainingOrDescriptionContaining(any(PageRequest.class), anyString(), anyString()))
+        when(productCacheService.findByTitleContainingOrDescriptionContaining(any(PageRequest.class), anyString()))
                 .thenReturn(Flux.just(testProduct));
         when(cartService.getProductQuantity(1L, session))
                 .thenReturn(Mono.just(2));
@@ -81,8 +87,8 @@ class ProductServiceTest {
         Mono<Page<ProductItemDto>> result = productService.getProducts(session, pageRequest, "search");
         StepVerifier.create(result)
                 .assertNext(s -> {
-                    verify(productRepository, times(1))
-                            .findByTitleContainingOrDescriptionContaining(eq(pageRequest), anyString(), any());
+                    verify(productCacheService, times(1))
+                            .findByTitleContainingOrDescriptionContaining(eq(pageRequest), anyString());
                     assertEquals(1, s.getContent().size());
                     ProductItemDto productItemDto = s.getContent().get(0);
                     assertProductItemDto(productItemDto, "Проверка поиска продуктов c фильтром", 2);
@@ -91,14 +97,14 @@ class ProductServiceTest {
 
     @Test
     void getProduct() {
-        when(productRepository.findById(anyLong())).thenReturn(Mono.just(testProduct));
+        when(productCacheService.findById(anyLong())).thenReturn(Mono.just(testProduct));
         when(cartService.getProductQuantity(1L, session)).thenReturn(Mono.just(2));
 
         Mono<ProductItemDto> result = productService.getProduct(session, 1L);
 
         StepVerifier.create(result)
                 .assertNext(s -> {
-                    verify(productRepository, times(1)).findById(anyLong());
+                    verify(productCacheService, times(1)).findById(anyLong());
                     assertProductItemDto(s, "Проверка получения продукта", 2);
                 }).verifyComplete();
 
@@ -106,7 +112,7 @@ class ProductServiceTest {
 
     @Test
     void createProduct() {
-        when(productRepository.save(any())).thenReturn(Mono.just(testProduct));
+        when(productCacheService.save(any())).thenReturn(Mono.just(testProduct));
         when(documentService.save(any())).thenReturn(Mono.just("newImage"));
 
         Mono<FilePart> filePart = Mono.just(mock(FilePart.class));
@@ -118,7 +124,7 @@ class ProductServiceTest {
         StepVerifier.create(result)
                         .assertNext(s -> {
                             verify(documentService, times(1)).save(filePart);
-                            verify(productRepository, times(1)).save(any(Product.class));
+                            verify(productCacheService, times(1)).save(any(Product.class));
                         }).verifyComplete();
     }
 

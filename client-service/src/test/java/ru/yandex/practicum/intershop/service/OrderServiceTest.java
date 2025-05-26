@@ -13,11 +13,11 @@ import reactor.test.StepVerifier;
 import ru.yandex.practicum.intershop.db.dao.OrderDao;
 import ru.yandex.practicum.intershop.db.repository.OrderItemRepository;
 import ru.yandex.practicum.intershop.db.repository.OrderRepository;
-import ru.yandex.practicum.intershop.db.repository.ProductRepository;
 import ru.yandex.practicum.intershop.dto.OrderDto;
 import ru.yandex.practicum.intershop.dto.OrderItemDto;
 import ru.yandex.practicum.intershop.entity.Order;
 import ru.yandex.practicum.intershop.entity.Product;
+import ru.yandex.practicum.payment.client.api.PaymentApi;
 
 import java.math.BigDecimal;
 import java.util.stream.Stream;
@@ -36,13 +36,15 @@ class OrderServiceTest {
     @MockitoBean
     OrderItemRepository orderItemRepository;
     @MockitoBean
-    ProductRepository productRepository;
+    ProductCacheService productCacheService;
     @MockitoBean
     CartService cartService;
     @MockitoBean
     OrderDao orderDao;
     @MockitoBean
     WebSession session;
+    @MockitoBean
+    PaymentApi paymentApi;
 
 
     @Test
@@ -56,11 +58,12 @@ class OrderServiceTest {
         Product two = mock(Product.class);
         when(one.getPrice()).thenReturn(BigDecimal.valueOf(100));
         when(two.getPrice()).thenReturn(BigDecimal.valueOf(500));
-        when(productRepository.findAllById(any(Flux.class))).thenReturn(Flux.just(one, two));
+        when(productCacheService.findAllById(any(Flux.class))).thenReturn(Flux.just(one, two));
         Order order = new Order().setId(1L);
         when(orderRepository.save(any(Order.class))).thenReturn(Mono.just(order));
         when(orderItemRepository.saveAll(any(Iterable.class))).thenReturn(Flux.empty());
         when(cartService.clearCart(any())).thenReturn(Mono.empty());
+        when(paymentApi.processPayment(any())).thenReturn(Mono.empty());
         Mono<Long> result = orderService.placeOrder(session);
 
         StepVerifier.create(result)
@@ -72,6 +75,7 @@ class OrderServiceTest {
                     assertNotNull(value.getNumber());
                     verify(orderItemRepository, times(1)).saveAll(any(Iterable.class));
                     verify(cartService, times(1)).clearCart(any(WebSession.class));
+                    verify(paymentApi, times(1)).processPayment(any());
                 }).verifyComplete();
     }
 

@@ -13,5 +13,4 @@ public interface ProductRepository extends R2dbcRepository<Product, Long> {
     Mono<Long> countAllByTitleContainingOrDescriptionContaining(String searchTitle, String searchDesc);
     Flux<Product> findByTitleContainingOrDescriptionContaining(Pageable page, String searchTitle, String searchDesc);
     Flux<Product> findAllBy(Pageable page);
-
 }

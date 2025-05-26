@@ -21,11 +21,18 @@ spring:
         enabled: true
   thymeleaf:
     encoding: UTF-8
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+  cache:
+    redis:
+      time-to-live: PT1M
 
 image:
   folder:
     server:
-      path: ${IMAGES_DIR:${user.dir}/uploaded-images}
+      path: ${IMAGES_DIR:${user.dir}/client-service/uploaded-images}
     client:
       path: /image/
 

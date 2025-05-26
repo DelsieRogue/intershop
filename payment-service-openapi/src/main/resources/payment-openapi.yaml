@@ -5,7 +5,7 @@ info:
   description: Реактивный REST API для получения баланса и осуществления платежа.
 
 servers:
-  - url: http://localhost:8081
+  - url: http://localhost:8082
     description: Локальный сервер
 
 paths:
