@@ -7,5 +7,6 @@
 
     <include file="db/changelog/changeset/01-init-mvp-schema.xml"/>
     <include file="db/changelog/changeset/02-insert-start.xml"/>
+    <include file="db/changelog/changeset/03-add-user.xml"/>
 
 </databaseChangeLog>

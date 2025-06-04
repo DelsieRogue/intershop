@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    
+    <changeSet id="create_user" author="mustafin_ir">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="users"/>
+            </not>
+        </preConditions>
+        <createTable tableName="users">
+            <column name="id" type="bigserial">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="username" type="varchar(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="secret" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <rollback>
+            <dropTable tableName="users"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="init-users" author="auto">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM users
+            </sqlCheck>
+        </preConditions>
+        <sql>
+            INSERT INTO users (username, name, secret, role) VALUES
+                                                                             ('terminator', 'Terminator', '$2a$12$ws7.pa//Zxp2mtlpgw8ZIuO2AW22w7IJtgbxLqUvRj7w62d8Pa8kS', 'ADMIN'),
+                                                                             ('dobby', 'Dobby', '$2a$12$GfyEXzXhVCKRXVRFzqBdkOAe/p1XdkNnEwQ3DmT8iricXpJbdSO76', 'USER');
+        </sql>
+    </changeSet>
+
+    <changeSet id="add-link_orders_users-step1" author="mustafin_ir">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="orders" columnName="user_id"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="orders">
+            <column name="user_id" type="bigint">
+                <constraints foreignKeyName="fk_order_user" references="users(id)" deleteCascade="true"/>
+            </column>
+        </addColumn>
+        <rollback>
+            <dropColumn tableName="orders" columnName="user_id"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="add-link_orders_users-step2" author="mustafin_ir">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM information_schema.columns 
+                WHERE table_name = 'orders' AND column_name = 'user_id' AND is_nullable = 'YES'
+            </sqlCheck>
+        </preConditions>
+        <sql>
+            UPDATE orders SET user_id = 1 WHERE id in (1, 2);
+            UPDATE orders SET user_id = 2 WHERE id in (3, 4, 5);
+        </sql>
+    </changeSet>
+
+    <changeSet id="add-link_orders_users-step3" author="mustafin_ir">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM orders WHERE user_id IS NULL
+            </sqlCheck>
+        </preConditions>
+        <addNotNullConstraint tableName="orders" columnName="user_id"/>
+        <rollback>
+            <dropNotNullConstraint tableName="orders" columnName="user_id"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
