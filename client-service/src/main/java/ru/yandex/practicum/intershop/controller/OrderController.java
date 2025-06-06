@@ -2,7 +2,6 @@ package ru.yandex.practicum.intershop.controller;
 
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,9 +35,11 @@ public class OrderController {
 
     @GetMapping
     public Mono<Rendering> getOrders(@AuthenticationPrincipal SecurityUser securityUser) {
-        Flux<OrderItemDto> dtoFlux = AuthorityUtils.authorityListToSet(securityUser.getAuthorities()).contains(Role.ADMIN.getWithPrefix())
-                ? orderService.getOrders()
-                : orderService.getOrders(securityUser.getUserId());
+        Flux<OrderItemDto> dtoFlux = SecurityUtils.getCurrentRole()
+                .filter(role -> role == Role.ADMIN)
+                .flatMapMany(s -> orderService.getOrders())
+                .switchIfEmpty(orderService.getOrders(securityUser.getUserId()));
+
         return Mono.zip(dtoFlux.collectList(), SecurityUtils.getCurrentRole())
                 .map(t -> Rendering.view("orders")
                         .modelAttribute("orders", t.getT1())

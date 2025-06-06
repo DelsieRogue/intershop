@@ -21,4 +21,14 @@ public class SecurityUtils {
                 .map(SecurityUser::getRole)
                 .switchIfEmpty(Mono.just(Role.ANONYMOUS));
     }
+
+    public static Mono<Long> getUserId() {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(SecurityContext::getAuthentication)
+                .filter(Authentication::isAuthenticated)
+                .filter(auth -> auth.getPrincipal() instanceof SecurityUser)
+                .map(auth -> (SecurityUser) auth.getPrincipal())
+                .map(SecurityUser::getUserId)
+                .switchIfEmpty(Mono.empty());
+    }
 }

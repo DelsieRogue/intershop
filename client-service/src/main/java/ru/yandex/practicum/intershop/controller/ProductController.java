@@ -6,8 +6,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.result.view.Rendering;
-import org.springframework.web.server.ServerWebExchange;
-import org.springframework.web.server.WebSession;
 import reactor.core.publisher.Mono;
 import ru.yandex.practicum.intershop.dto.Action;
 import ru.yandex.practicum.intershop.dto.CreateProductDto;
@@ -32,9 +30,9 @@ public class ProductController {
                                    @RequestParam(value = "page", defaultValue = "0") int page,
                                    @RequestParam(value = "pageSize", defaultValue = "10") int pageSize,
                                    @RequestParam(value = "sort", required = false) String sortField,
-                                   @RequestParam(value = "search", required = false) String search, ServerWebExchange exchange) {
+                                   @RequestParam(value = "search", required = false) String search) {
         PageRequest pageRequest = DataBaseRequestUtils.productView(page, pageSize, sortField);
-        return exchange.getSession().flatMap(session ->  productService.getProducts(session, pageRequest, search))
+        return productService.getProducts(pageRequest, search)
                 .zipWith(SecurityUtils.getCurrentRole())
                 .map(t -> Rendering.view("main")
                         .modelAttribute("newProduct", new CreateProductDto())
@@ -50,19 +48,19 @@ public class ProductController {
     @PutMapping({"/{productId}/updateInCart"})
     public Mono<Rendering> updateInCart(@PathVariable Long productId,
                                         @RequestBody String action,
-                                        ServerWebExchange exchange,
                                         @RequestHeader(value = "Referer", required = false) String referer) {
-        return exchange.getSession().flatMap(session -> switch (Action.valueOf(action)) {
-            case PLUS -> cartService.plusToCart(productId, session);
-            case MINUS -> cartService.minusFromCart(productId, session);
-            case DELETE -> cartService.deleteFromCart(productId, session);
-        }).then(Mono.just(Rendering.redirectTo(referer).build()));
+        Mono<Void> mono = switch (Action.valueOf(action)) {
+            case PLUS -> cartService.plusToCart(productId, SecurityUtils.getUserId());
+            case MINUS -> cartService.minusFromCart(productId, SecurityUtils.getUserId());
+            case DELETE -> cartService.deleteFromCart(productId, SecurityUtils.getUserId());
+        };
+        return mono.then(Mono.just(Rendering.redirectTo(referer).build()));
     }
 
 
     @GetMapping("/{productId}")
-    public Mono<Rendering> getProduct(@PathVariable Long productId, WebSession session) {
-        return Mono.zip(productService.getProduct(session, productId), SecurityUtils.getCurrentRole())
+    public Mono<Rendering> getProduct(@PathVariable Long productId) {
+        return Mono.zip(productService.getProduct(productId), SecurityUtils.getCurrentRole())
                         .map(t -> Rendering.view("item")
                                 .modelAttribute("product", t.getT1())
                                 .modelAttribute("role", t.getT2().name()).build());

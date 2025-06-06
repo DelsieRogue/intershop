@@ -8,14 +8,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.WebSession;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import ru.yandex.practicum.intershop.db.repository.ProductRepository;
 import ru.yandex.practicum.intershop.dto.CreateProductDto;
 import ru.yandex.practicum.intershop.dto.ProductItemDto;
 import ru.yandex.practicum.intershop.entity.Product;
 import ru.yandex.practicum.intershop.mapper.ProductMapper;
-import ru.yandex.practicum.intershop.db.repository.ProductRepository;
+import ru.yandex.practicum.intershop.utils.SecurityUtils;
 
 @Service
 public class ProductService {
@@ -35,7 +35,7 @@ public class ProductService {
         this.productCacheService = productCacheService;
     }
 
-    public Mono<Page<ProductItemDto>> getProducts(WebSession session, PageRequest pageRequest, @Nullable String search) {
+    public Mono<Page<ProductItemDto>> getProducts(PageRequest pageRequest, @Nullable String search) {
         Flux<Product> productFlux;
         Mono<Long> count;
         if (StringUtils.isEmpty(search)) {
@@ -47,17 +47,19 @@ public class ProductService {
         }
 
         Flux<ProductItemDto> productDtoFlux = productFlux
-                .flatMap(p -> cartService.getProductQuantity(p.getId(), session)
-                        .map(quantity -> productMapper.toProductItemDto(p, quantity)));
+                .flatMap(p -> cartService.getProductQuantity(p.getId(), SecurityUtils.getUserId())
+                        .map(quantity -> productMapper.toProductItemDto(p, quantity))
+                        .defaultIfEmpty(productMapper.toProductItemDto(p, 0)));
 
         return Mono.zip(productDtoFlux.collectList(), count)
                 .map(s -> new PageImpl<>(s.getT1(), pageRequest, s.getT2()));
     }
 
-    public Mono<ProductItemDto> getProduct(WebSession session, Long productId) {
+    public Mono<ProductItemDto> getProduct(Long productId) {
         return productCacheService.findById(productId)
-                .flatMap(p -> cartService.getProductQuantity(p.getId(), session)
-                        .map(quantity -> productMapper.toProductItemDto(p, quantity)));
+                .flatMap(p -> cartService.getProductQuantity(productId, SecurityUtils.getUserId())
+                        .map(quantity -> productMapper.toProductItemDto(p, quantity))
+                        .defaultIfEmpty(productMapper.toProductItemDto(p, 0)));
     }
 
     @Transactional

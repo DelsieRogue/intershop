@@ -1,11 +1,11 @@
 package ru.yandex.practicum.intershop.service.cart;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class Cart {
-    private final Map<Long, Integer> countProductsMap = new HashMap<>();
+    private final ConcurrentMap<Long, Integer> countProductsMap = new ConcurrentHashMap<>();
 
     public void plusProduct(Long productId) {
         countProductsMap.put(productId, countProductsMap.getOrDefault(productId, 0) + 1);

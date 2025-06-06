@@ -2,7 +2,6 @@ package ru.yandex.practicum.intershop.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.WebSession;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.yandex.practicum.intershop.db.dao.OrderDao;
@@ -38,10 +37,10 @@ public class OrderService {
     }
 
     @Transactional
-    public Mono<Long> placeOrder(WebSession session, Long userId) {
-        return productCacheService.findAllById(cartService.getProductIdsInCart(session)
+    public Mono<Long> placeOrder(Long userId) {
+        return productCacheService.findAllById(cartService.getProductIdsInCart(Mono.just(userId))
                         .switchIfEmpty(Mono.error(new IllegalStateException("В корзине нет товаров"))))
-                .flatMap(product -> cartService.getProductQuantity(product.getId(), session)
+                .flatMap(product -> cartService.getProductQuantity(product.getId(), Mono.just(userId))
                         .map(quantity -> new OrderItem()
                                 .setProductId(product.getId())
                                 .setPrice(product.getPrice())
@@ -62,7 +61,7 @@ public class OrderService {
                                 return orderItemRepository.saveAll(orderItems)
                                         .collectList()
                                         .then(paymentApi.processPayment(totalPrice))
-                                        .then(cartService.clearCart(session))
+                                        .then(cartService.clearCart(Mono.just(userId)))
                                         .thenReturn(savedOrder.getId());
                             });
                 });
