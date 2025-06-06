@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="referrer" content="origin-when-cross-origin">
     <title>Корзина товаров</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
     <script th:src="@{/scripts/script.js}" defer></script>
@@ -10,7 +11,7 @@
 
 <body>
 <!-- В href ссылка на страницу заказов -->
-<a th:href="@{/order}" style="float:right;">
+<a th:if="${role == 'USER'}" th:href="@{/order}" style="float:right;">
     <b>ЗАКАЗЫ &cudarrr;</b>
 </a>
 <!-- В href ссылка на главную страницу -->
@@ -47,7 +48,7 @@
                     		Передается параметр запроса action=[minus|plus]
                     	-->
                         <div>
-                            <span th:if="${product.quantity != 0}">
+                            <span th:if="${product.quantity != 0 && role == 'USER'}">
                                 <button value="MINUS" th:onclick="sendAction([[${product.id}]], 'MINUS')">-</button>
                                 <span th:text="${product.quantity}"></span>
                                 <button value="PLUS" th:onclick="sendAction([[${product.id}]], 'PLUS')">+</button>
@@ -73,7 +74,7 @@
             	В action ссылка на страницу оформления заказа.
             	В if true, если в корзине есть товары, false, если нет
             -->
-            <form th:action="@{cart/confirm}" method="post" th:if="${!isEmpty}">
+            <form th:action="@{cart/confirm}" method="post" th:if="${!isEmpty && role == 'USER'}">
                 <p th:if="${!cart.isCanBuy}" th:text="${cart.reason}"></p>
                 <button th:disabled="${!cart.isCanBuy}">Купить</button>
             </form>

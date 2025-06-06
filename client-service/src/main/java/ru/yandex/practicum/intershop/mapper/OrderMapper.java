@@ -31,6 +31,7 @@ public final class OrderMapper {
         Map<String, Object> first = list.get(0);
         OrderDto order = new OrderDto();
         order.setId((Long) first.get("orderId"));
+        order.setUserId((Long) first.get("userId"));
         order.setNumber((String) first.get("number"));
         order.setTotalPrice(((BigDecimal) first.get("totalPrice")).setScale(2, RoundingMode.HALF_UP).toString());
         order.setItems(items);
@@ -47,6 +48,7 @@ public final class OrderMapper {
                 .setItems(items)
                 .setTotalPrice(((BigDecimal) first.get("totalPrice")).setScale(2, RoundingMode.HALF_UP).toString())
                 .setId((Long) first.get("orderId"))
+                .setUserId((Long) first.get("userId"))
                 .setNumber((String) first.get("number"))
                 .setTotalPrice(((BigDecimal) first.get("totalPrice")).setScale(2, RoundingMode.HALF_UP).toString());
     }

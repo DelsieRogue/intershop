@@ -3,17 +3,18 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="referrer" content="origin-when-cross-origin">
     <title>Заказ</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 
 <body>
 <!-- В href ссылка на страницу заказов -->
-<a th:href="@{/order}" style="float:right;">
+<a th:if="${role != 'ANONYMOUS'}" th:href="@{/order}" style="float:right;">
     <b>ЗАКАЗЫ &cudarrr;</b>
 </a>
 <!-- В href ссылка на корзину -->
-<a th:href="@{/cart}" style="float:right;">
+<a th:if="${role == 'USER'}" th:href="@{/cart}" style="float:right;">
     <b>КОРЗИНА &cudarrr;</b>
 </a>
 <!-- В href ссылка на главную страницу -->

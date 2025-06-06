@@ -2,7 +2,6 @@ package ru.yandex.practicum.intershop.config.security;
 
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
@@ -23,7 +22,7 @@ public class RepositoryUserDetailsService implements ReactiveUserDetailsService 
     public Mono<UserDetails> findByUsername(String username) {
         return userRepository.findByUsername(username)
                 .switchIfEmpty(Mono.error(new UsernameNotFoundException("Пользователь не найден")))
-                .map(user -> new User(user.getUsername(), user.getSecret(),
-                        List.of(new SimpleGrantedAuthority(user.getRole().name()))));
+                .map(user -> new SecurityUser(user.getUsername(), user.getSecret(),
+                        List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())), user.getId(), user.getRole()));
     }
 }

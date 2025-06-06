@@ -13,6 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 public class OrderItemDto {
     private Long id;
+    private Long userId;
     private String number;
     private String totalPrice;
     private List<ProductViewDto> items;

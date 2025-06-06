@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="referrer" content="origin-when-cross-origin">
     <title>Витрина товаров</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
     <script th:src="@{/scripts/script.js}" defer></script>
@@ -10,14 +11,17 @@
 
 <body>
     <!-- В href ссылка на страницу заказов -->
-    <a th:href="@{/order}" style="float:right;">
+    <a th:if="${role != 'ANONYMOUS'}" th:href="@{/order}" style="float:right;">
         <b>ЗАКАЗЫ &cudarrr;</b>
     </a>
+    <a th:if="${role == 'ANONYMOUS'}" th:href="@{/login}" style="float:right;">
+        <b>Войти &cudarrr;</b>
+    </a>
     <!-- В href ссылка на корзину -->
-    <a th:href="@{/cart}" style="float:right;">
+    <a th:if="${role == 'USER'}" th:href="@{/cart}" style="float:right;">
         <b>КОРЗИНА &cudarrr;</b>
     </a>
-    <button id="addProduct" onclick="togglePostForm()">Добавить продукт</button>
+    <button th:if="${role == 'ADMIN'}" id="addProduct" onclick="togglePostForm()">Добавить продукт</button>
     <table style="width:70%;margin-left:auto;margin-right:auto;">
         <tr>
             <td>
@@ -93,7 +97,7 @@
                         <!-- В text описание товара -->
                         <td th:text="${product.description}"></td>
                     </tr>
-                    <tr>
+                    <tr th:if="${role == 'USER'}">
                         <td>
                             <!-- 
                     		В action ссылка на изменение количества товара в корзине.
@@ -115,7 +119,7 @@
             </td>
         </tr>
     </table>
-    <div id="productForm" class="product-form" style="display: none;">
+    <div th:if="${role == 'ADMIN'}" id="productForm" class="product-form" style="display: none;">
         <h2>Добавить новый продукт</h2>
         <form th:action="@{/product}" method="post" th:object="${newProduct}" enctype="multipart/form-data">
             <input type="text" name="title" th:field="*{title}" placeholder="Название товара" required>

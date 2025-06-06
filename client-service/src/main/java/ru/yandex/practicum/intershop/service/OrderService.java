@@ -38,7 +38,7 @@ public class OrderService {
     }
 
     @Transactional
-    public Mono<Long> placeOrder(WebSession session) {
+    public Mono<Long> placeOrder(WebSession session, Long userId) {
         return productCacheService.findAllById(cartService.getProductIdsInCart(session)
                         .switchIfEmpty(Mono.error(new IllegalStateException("В корзине нет товаров"))))
                 .flatMap(product -> cartService.getProductQuantity(product.getId(), session)
@@ -54,7 +54,8 @@ public class OrderService {
 
                     Order order = new Order()
                             .setNumber(generateOrderNumber())
-                            .setTotalPrice(totalPrice);
+                            .setTotalPrice(totalPrice)
+                            .setUserId(userId);
                     return orderRepository.save(order)
                             .flatMap(savedOrder -> {
                                 orderItems.forEach(item -> item.setOrderId(savedOrder.getId()));
@@ -73,6 +74,10 @@ public class OrderService {
 
     public Flux<OrderItemDto> getOrders() {
         return orderDao.findAllOrdersWithItems();
+    }
+
+    public Flux<OrderItemDto> getOrders(Long userId) {
+        return orderDao.findAllOrdersWithItems(userId);
     }
 
     public String generateOrderNumber() {

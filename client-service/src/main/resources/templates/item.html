@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="referrer" content="origin-when-cross-origin">
     <title>Витрина товаров</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
     <script th:src="@{/scripts/script.js}" defer></script>
@@ -10,11 +11,14 @@
 
 <body>
     <!-- В href ссылка на страницу заказов -->
-    <a th:href="@{/order}" style="float:right;">
+    <a th:if="${role != 'ANONYMOUS'}" th:href="@{/order}" style="float:right;">
         <b>ЗАКАЗЫ &cudarrr;</b>
     </a>
+    <a th:if="${role == 'ANONYMOUS'}" th:href="@{/login}" style="float:right;">
+        <b>Войти &cudarrr;</b>
+    </a>
     <!-- В href ссылка на корзину -->
-    <a  th:href="@{/cart}" style="float:right;">
+    <a th:if="${role == 'USER'}" th:href="@{/cart}" style="float:right;">
         <b>КОРЗИНА &cudarrr;</b>
     </a>
     <!-- В href ссылка на главную страницу -->
@@ -40,7 +44,7 @@
 		В action ссылка на изменение количества товара в корзине.
 		Передается параметр запроса action=[minus|plus]
 	-->
-        <div>
+        <div th:if="${role == 'USER'}">
             <span th:if="${product.quantity != 0}">
                 <button value="MINUS" th:onclick="sendAction([[${product.id}]], 'MINUS')">-</button>
                 <span th:text="${product.quantity}"></span>

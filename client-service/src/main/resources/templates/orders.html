@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="referrer" content="origin-when-cross-origin">
     <title>Заказы</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
     <script th:src="@{/scripts/script.js}" defer></script>
@@ -10,7 +11,7 @@
 
 <body>
 <!-- В href ссылка на корзину -->
-<a th:href="@{/cart}" style="float:right;">
+<a th:if="${role != 'ANONYMOUS'}" th:href="@{/cart}" style="float:right;">
     <b>КОРЗИНА &cudarrr;</b>
 </a>
 <!-- В href ссылка на главную страницу -->

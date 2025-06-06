@@ -41,8 +41,9 @@
         </preConditions>
         <sql>
             INSERT INTO users (username, name, secret, role) VALUES
-                                                                             ('terminator', 'Terminator', '$2a$12$ws7.pa//Zxp2mtlpgw8ZIuO2AW22w7IJtgbxLqUvRj7w62d8Pa8kS', 'ADMIN'),
-                                                                             ('dobby', 'Dobby', '$2a$12$GfyEXzXhVCKRXVRFzqBdkOAe/p1XdkNnEwQ3DmT8iricXpJbdSO76', 'USER');
+                                                                             ('gollum', 'Gollum', '$2a$12$XLzXVGefgS6avfuWYE.PVOkr8D4xXYdwG4w7nuhOQ9eERnuCggjdC', 'USER'),
+                                                                             ('dobby', 'Dobby', '$2a$12$XLzXVGefgS6avfuWYE.PVOkr8D4xXYdwG4w7nuhOQ9eERnuCggjdC', 'USER'),
+                                                                             ('terminator', 'Terminator', '$2a$12$ws7.pa//Zxp2mtlpgw8ZIuO2AW22w7IJtgbxLqUvRj7w62d8Pa8kS', 'ADMIN');
         </sql>
     </changeSet>
 
