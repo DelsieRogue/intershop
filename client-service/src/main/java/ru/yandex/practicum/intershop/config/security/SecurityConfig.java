@@ -16,6 +16,8 @@ import org.springframework.security.web.server.context.WebSessionServerSecurityC
 import org.springframework.security.web.server.header.ReferrerPolicyServerHttpHeadersWriter;
 import ru.yandex.practicum.intershop.entity.Role;
 
+import static org.springframework.security.config.Customizer.withDefaults;
+
 @Configuration
 @EnableWebFluxSecurity
 @EnableReactiveMethodSecurity
@@ -34,7 +36,7 @@ public class SecurityConfig {
                         .pathMatchers("/order/**").authenticated()
                         .pathMatchers("/cart/**").hasRole(Role.USER.name())
                         .anyExchange().authenticated())
-
+                .oauth2Login(withDefaults())
                 .headers(headerSpec -> headerSpec.referrerPolicy(referrerPolicySpec ->
                         referrerPolicySpec.policy(ReferrerPolicyServerHttpHeadersWriter.ReferrerPolicy.ORIGIN_WHEN_CROSS_ORIGIN)))
                 .securityContextRepository(new WebSessionServerSecurityContextRepository())
