@@ -10,8 +10,11 @@ import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.oidc.web.server.logout.OidcClientInitiatedServerLogoutSuccessHandler;
+import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.RedirectServerAuthenticationSuccessHandler;
+import org.springframework.security.web.server.authentication.logout.ServerLogoutSuccessHandler;
 import org.springframework.security.web.server.context.WebSessionServerSecurityContextRepository;
 import org.springframework.security.web.server.header.ReferrerPolicyServerHttpHeadersWriter;
 import ru.yandex.practicum.intershop.entity.Role;
@@ -25,7 +28,8 @@ public class SecurityConfig {
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http,
-                                                         ReactiveAuthenticationManager authenticationManager) {
+                                                         ReactiveAuthenticationManager authenticationManager,
+                                                         ServerLogoutSuccessHandler serverLogoutSuccessHandler) {
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
@@ -37,11 +41,19 @@ public class SecurityConfig {
                         .pathMatchers("/cart/**").hasRole(Role.USER.name())
                         .anyExchange().authenticated())
                 .oauth2Login(withDefaults())
+                .logout(logout -> logout
+                        .logoutSuccessHandler(serverLogoutSuccessHandler)
+                )
                 .headers(headerSpec -> headerSpec.referrerPolicy(referrerPolicySpec ->
                         referrerPolicySpec.policy(ReferrerPolicyServerHttpHeadersWriter.ReferrerPolicy.ORIGIN_WHEN_CROSS_ORIGIN)))
                 .securityContextRepository(new WebSessionServerSecurityContextRepository())
                 .authenticationManager(authenticationManager)
                 .build();
+    }
+
+    @Bean
+    public ServerLogoutSuccessHandler oidcLogoutSuccessHandler(ReactiveClientRegistrationRepository clientRegistrationRepository) {
+        return new OidcClientInitiatedServerLogoutSuccessHandler(clientRegistrationRepository);
     }
 
     @Bean

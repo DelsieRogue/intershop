@@ -10,6 +10,9 @@
 </head>
 
 <body>
+<a th:if="${role != 'ANONYMOUS'}" th:href="@{/logout}" style="float:right;">
+    <b>Выйти &cudarrr;</b>
+</a>
 <!-- В href ссылка на страницу заказов -->
 <a th:if="${role == 'USER'}" th:href="@{/order}" style="float:right;">
     <b>ЗАКАЗЫ &cudarrr;</b>

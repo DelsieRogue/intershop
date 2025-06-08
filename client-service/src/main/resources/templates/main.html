@@ -10,12 +10,15 @@
 </head>
 
 <body>
+    <a th:if="${role == 'ANONYMOUS'}" th:href="@{/login}" style="float:right;">
+        <b>Войти &cudarrr;</b>
+    </a>
+    <a th:if="${role != 'ANONYMOUS'}" th:href="@{/logout}" style="float:right;">
+        <b>Выйти &cudarrr;</b>
+    </a>
     <!-- В href ссылка на страницу заказов -->
     <a th:if="${role != 'ANONYMOUS'}" th:href="@{/order}" style="float:right;">
         <b>ЗАКАЗЫ &cudarrr;</b>
-    </a>
-    <a th:if="${role == 'ANONYMOUS'}" th:href="@{/login}" style="float:right;">
-        <b>Войти &cudarrr;</b>
     </a>
     <!-- В href ссылка на корзину -->
     <a th:if="${role == 'USER'}" th:href="@{/cart}" style="float:right;">

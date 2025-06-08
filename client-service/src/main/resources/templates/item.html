@@ -17,6 +17,9 @@
     <a th:if="${role == 'ANONYMOUS'}" th:href="@{/login}" style="float:right;">
         <b>Войти &cudarrr;</b>
     </a>
+    <a th:if="${role != 'ANONYMOUS'}" th:href="@{/logout}" style="float:right;">
+        <b>Выйти &cudarrr;</b>
+    </a>
     <!-- В href ссылка на корзину -->
     <a th:if="${role == 'USER'}" th:href="@{/cart}" style="float:right;">
         <b>КОРЗИНА &cudarrr;</b>

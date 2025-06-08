@@ -10,6 +10,9 @@
 </head>
 
 <body>
+<a th:if="${role != 'ANONYMOUS'}" th:href="@{/logout}" style="float:right;">
+    <b>Выйти &cudarrr;</b>
+</a>
 <!-- В href ссылка на корзину -->
 <a th:if="${role != 'ANONYMOUS'}" th:href="@{/cart}" style="float:right;">
     <b>КОРЗИНА &cudarrr;</b>
