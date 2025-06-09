@@ -49,9 +49,9 @@ class OrderServiceTest {
 
     @Test
     void placeOrder() {
-        when(cartService.isEmpty(session)).thenReturn(Mono.just(Boolean.FALSE));
-        when(cartService.getProductIdsInCart(session)).thenReturn(Flux.fromStream(Stream.of(1L, 2L)));
-        when(cartService.getProductQuantity(anyLong(), any(WebSession.class)))
+        when(cartService.isEmpty(any(Mono.class))).thenReturn(Mono.just(Boolean.FALSE));
+        when(cartService.getProductIdsInCart(any(Mono.class))).thenReturn(Flux.fromStream(Stream.of(1L, 2L)));
+        when(cartService.getProductQuantity(anyLong(), any(Mono.class)))
                 .thenReturn(Mono.just(2))
                 .thenReturn(Mono.just(1));
         Product one = mock(Product.class);
@@ -64,7 +64,7 @@ class OrderServiceTest {
         when(orderItemRepository.saveAll(any(Iterable.class))).thenReturn(Flux.empty());
         when(cartService.clearCart(any())).thenReturn(Mono.empty());
         when(paymentApi.processPayment(any())).thenReturn(Mono.empty());
-        Mono<Long> result = orderService.placeOrder(session);
+        Mono<Long> result = orderService.placeOrder(1L);
 
         StepVerifier.create(result)
                 .assertNext(s -> {
@@ -74,7 +74,7 @@ class OrderServiceTest {
                     assertEquals(new BigDecimal(700), value.getTotalPrice());
                     assertNotNull(value.getNumber());
                     verify(orderItemRepository, times(1)).saveAll(any(Iterable.class));
-                    verify(cartService, times(1)).clearCart(any(WebSession.class));
+                    verify(cartService, times(1)).clearCart(any(Mono.class));
                     verify(paymentApi, times(1)).processPayment(any());
                 }).verifyComplete();
     }

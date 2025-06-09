@@ -62,10 +62,10 @@ class ProductServiceTest {
         when(productRepository.count()).thenReturn(Mono.just(1L));
         when(productCacheService.findAllBy(any(PageRequest.class)))
                 .thenReturn(Flux.just(testProduct));
-        when(cartService.getProductQuantity(1L, session))
+        when(cartService.getProductQuantity(anyLong(), any(Mono.class)))
                 .thenReturn(Mono.just(2));
 
-        Mono<Page<ProductItemDto>> result = productService.getProducts(session, pageRequest, null);
+        Mono<Page<ProductItemDto>> result = productService.getProducts(pageRequest, null);
         StepVerifier.create(result)
                         .assertNext(s -> {
                             verify(productCacheService, times(1)).findAllBy(eq(pageRequest));
@@ -81,10 +81,10 @@ class ProductServiceTest {
         when(productRepository.countAllByTitleContainingOrDescriptionContaining(any(), any())).thenReturn(Mono.just(1L));
         when(productCacheService.findByTitleContainingOrDescriptionContaining(any(PageRequest.class), anyString()))
                 .thenReturn(Flux.just(testProduct));
-        when(cartService.getProductQuantity(1L, session))
+        when(cartService.getProductQuantity(anyLong(), any(Mono.class)))
                 .thenReturn(Mono.just(2));
 
-        Mono<Page<ProductItemDto>> result = productService.getProducts(session, pageRequest, "search");
+        Mono<Page<ProductItemDto>> result = productService.getProducts(pageRequest, "search");
         StepVerifier.create(result)
                 .assertNext(s -> {
                     verify(productCacheService, times(1))
@@ -98,9 +98,9 @@ class ProductServiceTest {
     @Test
     void getProduct() {
         when(productCacheService.findById(anyLong())).thenReturn(Mono.just(testProduct));
-        when(cartService.getProductQuantity(1L, session)).thenReturn(Mono.just(2));
+        when(cartService.getProductQuantity(anyLong(), any(Mono.class))).thenReturn(Mono.just(2));
 
-        Mono<ProductItemDto> result = productService.getProduct(session, 1L);
+        Mono<ProductItemDto> result = productService.getProduct(1L);
 
         StepVerifier.create(result)
                 .assertNext(s -> {
