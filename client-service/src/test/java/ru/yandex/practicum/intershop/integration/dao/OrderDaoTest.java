@@ -3,17 +3,15 @@ package ru.yandex.practicum.intershop.integration.dao;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import ru.yandex.practicum.intershop.db.dao.OrderDao;
 import ru.yandex.practicum.intershop.dto.OrderDto;
 import ru.yandex.practicum.intershop.dto.OrderItemDto;
-import ru.yandex.practicum.intershop.integration.AbstractDaoTest;
+import ru.yandex.practicum.intershop.integration.AbstractRepositoryTest;
 
-@SpringBootTest
-public class OrderDaoTest extends AbstractDaoTest {
+public class OrderDaoTest extends AbstractRepositoryTest {
     @Autowired
     OrderDao orderDao;
 

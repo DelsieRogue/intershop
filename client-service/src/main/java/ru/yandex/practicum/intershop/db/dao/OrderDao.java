@@ -43,7 +43,7 @@ public class OrderDao {
                     JOIN order_items oi ON o.id = oi.order_id
                     JOIN products p ON oi.product_id = p.id
                     WHERE o.user_id = :userId
-                    ORDER BY o.id
+                    ORDER BY o.created_at DESC 
                 """;
         return r2dbcEntityTemplate.getDatabaseClient().sql(sql)
                 .bind("userId", userId)
@@ -60,7 +60,7 @@ public class OrderDao {
                     FROM orders o
                     JOIN order_items oi ON o.id = oi.order_id
                     JOIN products p ON oi.product_id = p.id
-                    ORDER BY o.id
+                    ORDER BY o.created_at DESC 
                 """;
         return r2dbcEntityTemplate.getDatabaseClient().sql(sql)
                 .fetch()

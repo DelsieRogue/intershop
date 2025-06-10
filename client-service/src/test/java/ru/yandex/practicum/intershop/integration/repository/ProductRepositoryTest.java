@@ -8,9 +8,9 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import ru.yandex.practicum.intershop.db.repository.ProductRepository;
 import ru.yandex.practicum.intershop.entity.Product;
-import ru.yandex.practicum.intershop.integration.AbstractDataR2dbcTest;
+import ru.yandex.practicum.intershop.integration.AbstractRepositoryTest;
 
-class ProductRepositoryTest extends AbstractDataR2dbcTest {
+class ProductRepositoryTest extends AbstractRepositoryTest {
 
     @Autowired
     ProductRepository productRepository;
